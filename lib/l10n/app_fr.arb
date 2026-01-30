@@ -1,0 +1,10 @@
+{
+  "appTitle": "SHAREL",
+  "@appTitle": {
+    "description": "Nom de l'application"
+  },
+  "labelSend": "Envoyer",
+  "labelReceive": "Recevoir",
+  "labelFiles": "Fichiers",
+  "homeWelcome": "Bienvenue sur SHAREL"
+}
