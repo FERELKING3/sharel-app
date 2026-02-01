@@ -23,6 +23,17 @@ subprojects {
         ) {
             val androidExt = extensions.findByName("android")
             if (androidExt != null) {
+                // Remove package attribute from Manifest to satisfy AGP 8+
+                val manifestFile = file("src/main/AndroidManifest.xml")
+                if (manifestFile.exists()) {
+                    var content = manifestFile.readText()
+                    if (content.contains("package=")) {
+                        content = content.replace(Regex("package=\"[^\"]*\""), "")
+                        manifestFile.writeText(content)
+                        println("Patch: Removed package attribute from Manifest of $name")
+                    }
+                }
+
                 val hasNamespace = try {
                     val ns = androidExt.javaClass
                         .getMethod("getNamespace")
