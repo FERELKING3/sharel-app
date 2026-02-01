@@ -1,9 +1,9 @@
 import 'dart:io';
-import 'package:device_apps/device_apps.dart';
+import 'package:installed_apps/installed_apps.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class AppsState {
-  final List<Application> apps;
+  final List<AppInfo> apps;
   final bool isLoading;
   final String? error;
 
@@ -14,7 +14,7 @@ class AppsState {
   });
 
   AppsState copyWith({
-    List<Application>? apps,
+    List<AppInfo>? apps,
     bool? isLoading,
     String? error,
   }) {
@@ -42,10 +42,7 @@ class AppsViewModel extends StateNotifier<AppsState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final apps = await DeviceApps.getInstalledApplications(
-        includeAppIcons: true,
-        includeSystemApps: false,
-      );
+      final apps = await InstalledApps.getInstalledApps();
       state = state.copyWith(
         apps: apps,
         isLoading: false,

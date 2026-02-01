@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:device_apps/device_apps.dart';
+import 'package:installed_apps/installed_apps.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/theme/design_system.dart';
@@ -63,16 +63,14 @@ class _AppsTabState extends State<AppsTab>
             final app = apps[index];
             final selectedItem = SelectedItem.app(
               packageName: app.packageName,
-              name: app.appName,
+              name: app.name,
               iconPath: null, // TODO: handle icon
             );
             final isSelected = selection.contains(selectedItem);
 
             return ListTile(
-              leading: app is ApplicationWithIcon
-                  ? Image.memory(app.icon, width: 40, height: 40)
-                  : const Icon(Icons.apps),
-              title: Text(app.appName),
+              leading: Image.memory(app.icon, width: 40, height: 40),
+              title: Text(app.name),
               subtitle: Text(app.packageName),
               trailing: Checkbox(
                 value: isSelected,
