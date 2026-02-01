@@ -24,3 +24,6 @@ args = "flutter build apk --debug --local-engine-src-path=/tmp/flutter --local-e
 
 [workflows.workflow.metadata]
 outputType = "console"
+
+[nix]
+packages = ["flutter"]
