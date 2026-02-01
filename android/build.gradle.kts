@@ -17,11 +17,11 @@ subprojects {
 }
 subprojects {
     afterEvaluate {
-        if (project.hasProperty("android")) {
-            val android = project.extensions.getByName("android")
+        if (project.plugins.hasPlugin("com.android.library") || project.plugins.hasPlugin("com.android.application")) {
+            val android = project.extensions.findByName("android")
             if (android is com.android.build.gradle.BaseExtension) {
-                if (android.namespace == null) {
-                    val defaultNamespace = "com.sharel.plugins.${project.name.replace("-", "_")}"
+                if (android.namespace == null || android.namespace?.trim()?.isEmpty() == true) {
+                    val defaultNamespace = "com.sharel.patched.${project.name.replace("-", "_")}"
                     android.namespace = defaultNamespace
                     println("Setting namespace to $defaultNamespace for project ${project.name}")
                 }
