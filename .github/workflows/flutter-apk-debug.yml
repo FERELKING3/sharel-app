@@ -43,14 +43,14 @@ jobs:
           flutter clean
           flutter pub get
 
-      - name: Build APK (debug, verbose)
+      - name: Build APK (Release Split)
         run: |
           set -euxo pipefail
-          flutter build apk --debug -v
+          flutter build apk --release --split-per-abi
 
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
-          name: sharel-debug-apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          name: sharel-release-apks
+          path: build/app/outputs/flutter-apk/*.apk
           if-no-files-found: error

@@ -8,7 +8,8 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final t = AppLocalizations.of(context)!;
+    final t = AppLocalizations.of(context);
+    if (t == null) return const SizedBox.shrink();
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),

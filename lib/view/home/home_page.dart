@@ -117,7 +117,8 @@ class _HomeMainActions extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final t = AppLocalizations.of(context)!;
+    final t = AppLocalizations.of(context);
+    if (t == null) return const SizedBox.shrink();
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
       children: [
@@ -343,7 +344,8 @@ class _HomeBottomNav extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final t = AppLocalizations.of(context)!;
+    final t = AppLocalizations.of(context);
+    if (t == null) return const SizedBox.shrink();
     return NavigationBar(
       backgroundColor: theme.colorScheme.surface,
       destinations: [
