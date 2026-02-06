@@ -15,10 +15,6 @@ Future<void> main() async {
   runApp(const ProviderScope(child: SharelApp()));
 }
 
-void main() {
-  runApp(const ProviderScope(child: SharelApp()));
-}
-
 class SharelApp extends StatelessWidget {
   const SharelApp({super.key});
 

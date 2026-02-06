@@ -131,7 +131,7 @@ class MePage extends StatelessWidget {
                           child: ListTile(
                             leading: const CircleAvatar(child: Icon(Icons.phone)),
                             title: const Text('+242 065491040'),
-                            subtitle: Text(t?.labelPhone ?? 'Numéro de téléphone'),
+                            subtitle: const Text('Numéro de téléphone'),
                           ),
                         ),
                         const SizedBox(height: AppTheme.spacing8),

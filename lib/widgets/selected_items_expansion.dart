@@ -57,7 +57,7 @@ class _SelectedItemsExpansionState extends State<SelectedItemsExpansion> {
             ),
             if (_isExpanded) ...[
               SizedBox(height: AppTheme.spacing12),
-              Divider(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+              Divider(color: theme.colorScheme.primary.withOpacity(0.2)),
               SizedBox(height: AppTheme.spacing12),
               SizedBox(
                 height: 150,
@@ -98,9 +98,9 @@ class _SelectedItemsExpansionState extends State<SelectedItemsExpansion> {
   }
 
   IconData _getItemIcon(SelectedItem item) {
-    return item.when(
+      return item.when(
       contact: (_, __, ___) => Icons.person,
-      file: (__, ___) => Icons.insert_drive_file,
+      file: (path, name, size) => Icons.insert_drive_file,
       video: (_, __, ___, ____) => Icons.video_library,
       photo: (_, __, ___) => Icons.image,
       music: (_, __, ___, ____, _____) => Icons.music_note,
@@ -111,7 +111,7 @@ class _SelectedItemsExpansionState extends State<SelectedItemsExpansion> {
   String _getItemName(SelectedItem item) {
     return item.when(
       contact: (_, name, __) => name,
-      file: (__, name) => name,
+      file: (path, name, size) => name,
       video: (_, __, title, ___) => title,
       photo: (_, __, ___) => 'Photo',
       music: (_, __, title, ___, ____) => title,

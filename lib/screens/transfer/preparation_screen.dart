@@ -120,7 +120,7 @@ class _PermissionItem extends StatelessWidget {
       padding: EdgeInsets.all(AppTheme.spacing12),
       decoration: BoxDecoration(
         border: Border.all(
-          color: statusColor.withValues(alpha: 0.3),
+          color: statusColor.withOpacity(0.3),
           width: 1,
         ),
         borderRadius: BorderRadius.circular(8),

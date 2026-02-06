@@ -111,11 +111,11 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
                       borderRadius: BorderRadius.circular(16),
                       gradient: LinearGradient(
                         colors: [
-                          theme.colorScheme.secondary.withValues(alpha: 0.12),
-                          theme.colorScheme.secondary.withValues(alpha: 0.04),
+                          theme.colorScheme.secondary.withOpacity(0.12),
+                          theme.colorScheme.secondary.withOpacity(0.04),
                         ],
                       ),
-                      border: Border.all(color: theme.colorScheme.secondary.withValues(alpha: 0.3)),
+                      border: Border.all(color: theme.colorScheme.secondary.withOpacity(0.3)),
                     ),
                     child: Row(
                       children: [
@@ -123,7 +123,7 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
                           padding: EdgeInsets.all(AppTheme.spacing12),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: theme.colorScheme.secondary.withValues(alpha: 0.2),
+                            color: theme.colorScheme.secondary.withOpacity(0.2),
                           ),
                           child: Icon(Icons.check_circle, color: theme.colorScheme.secondary, size: 28),
                         ),
@@ -155,7 +155,7 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
                         color: theme.colorScheme.surface,
                         boxShadow: [
                           BoxShadow(
-                            color: theme.colorScheme.primary.withValues(alpha: 0.06),
+                            color: theme.colorScheme.primary.withOpacity(0.06),
                             blurRadius: 12,
                             offset: const Offset(0, 6),
                           ),
@@ -188,10 +188,10 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
                       color: theme.colorScheme.surface,
-                      border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.15)),
+                      border: Border.all(color: theme.colorScheme.outline.withOpacity(0.15)),
                       boxShadow: [
                         BoxShadow(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                          color: theme.colorScheme.primary.withOpacity(0.08),
                           blurRadius: 12,
                           offset: const Offset(0, 4),
                         ),
@@ -227,8 +227,8 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
                     padding: EdgeInsets.all(AppTheme.spacing16),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: theme.colorScheme.primaryContainer.withValues(alpha: 0.15),
-                      border: Border.all(color: theme.colorScheme.primary.withValues(alpha: 0.2)),
+                      color: theme.colorScheme.primaryContainer.withOpacity(0.15),
+                      border: Border.all(color: theme.colorScheme.primary.withOpacity(0.2)),
                     ),
                     child: Row(
                       children: [
@@ -236,7 +236,7 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
                           padding: EdgeInsets.all(AppTheme.spacing8),
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                            color: theme.colorScheme.primary.withOpacity(0.2),
                           ),
                           child: Icon(Icons.folder, color: theme.colorScheme.primary),
                         ),
@@ -259,7 +259,7 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
                     padding: EdgeInsets.all(AppTheme.spacing16),
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16),
-                      color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.1),
+                      color: theme.colorScheme.secondaryContainer.withOpacity(0.1),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -277,7 +277,7 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
                             child: LinearProgressIndicator(
                               value: state.progress,
                               minHeight: 6,
-                              backgroundColor: theme.colorScheme.outline.withValues(alpha: 0.2),
+                              backgroundColor: theme.colorScheme.outline.withOpacity(0.2),
                               valueColor: AlwaysStoppedAnimation(theme.colorScheme.primary),
                             ),
                           ),

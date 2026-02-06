@@ -49,7 +49,7 @@ class _AppShellState extends State<AppShell> {
         body: widget.child,
         bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.1))),
+          border: Border(top: BorderSide(color: theme.colorScheme.outline.withOpacity(0.1))),
         ),
         child: NavigationBar(
           backgroundColor: theme.colorScheme.surface,
