@@ -33,7 +33,7 @@ class HomePage extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildQuickActions(context, isMobile),
+                _buildQuickActions(context, isMobile, ref),
                   SizedBox(height: isMobile ? 32 : 48),
                   _buildStats(context, theme, isMobile),
                   SizedBox(height: isMobile ? 32 : 48),
@@ -111,7 +111,7 @@ class HomePage extends ConsumerWidget {
     );
   }
 
-  Widget _buildQuickActions(BuildContext context, bool isMobile) {
+  Widget _buildQuickActions(BuildContext context, bool isMobile, WidgetRef ref) {
     final theme = Theme.of(context);
     final t = AppLocalizations.of(context);
     if (t == null) return const SizedBox();

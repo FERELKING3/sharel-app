@@ -48,37 +48,37 @@ class _AppShellState extends State<AppShell> {
       child: Scaffold(
         body: widget.child,
         bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          border: Border(top: BorderSide(color: theme.colorScheme.outline.withOpacity(0.1))),
-        ),
-        child: NavigationBar(
-          backgroundColor: theme.colorScheme.surface,
-          elevation: 0,
-          selectedIndex: _selectedIndex,
-          destinations: [
-            NavigationDestination(
-              icon: const Icon(Icons.home_outlined),
-              selectedIcon: const Icon(Icons.home),
-              label: t?.bottomNavHome ?? 'Accueil',
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.folder_outlined),
-              selectedIcon: const Icon(Icons.folder),
-              label: t?.labelFiles ?? 'Fichiers',
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.travel_explore),
-              selectedIcon: const Icon(Icons.travel_explore),
-              label: t?.bottomNavDiscovery ?? 'Découvrir',
-            ),
-            NavigationDestination(
-              icon: const Icon(Icons.person_outline),
-              selectedIcon: const Icon(Icons.person),
-              label: t?.bottomNavMe ?? 'Profil',
-            ),
-          ],
-          onDestinationSelected: _onNavDestinationSelected,
-
+          decoration: BoxDecoration(
+            border: Border(top: BorderSide(color: theme.colorScheme.outline.withOpacity(0.1))),
+          ),
+          child: NavigationBar(
+            backgroundColor: theme.colorScheme.surface,
+            elevation: 0,
+            selectedIndex: _selectedIndex,
+            destinations: [
+              NavigationDestination(
+                icon: const Icon(Icons.home_outlined),
+                selectedIcon: const Icon(Icons.home),
+                label: t?.bottomNavHome ?? 'Accueil',
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.folder_outlined),
+                selectedIcon: const Icon(Icons.folder),
+                label: t?.labelFiles ?? 'Fichiers',
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.travel_explore),
+                selectedIcon: const Icon(Icons.travel_explore),
+                label: t?.bottomNavDiscovery ?? 'Découvrir',
+              ),
+              NavigationDestination(
+                icon: const Icon(Icons.person_outline),
+                selectedIcon: const Icon(Icons.person),
+                label: t?.bottomNavMe ?? 'Profil',
+              ),
+            ],
+            onDestinationSelected: _onNavDestinationSelected,
+          ),
         ),
       ),
     );

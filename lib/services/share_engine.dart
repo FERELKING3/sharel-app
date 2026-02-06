@@ -20,7 +20,7 @@ class ShareEngine {
 
   ShareEngine(this.items) {
     sessionId = DateTime.now().millisecondsSinceEpoch.toString();
-    sessionToken = const Uuid().v4();
+    sessionToken = Uuid().v4();
     tokenExpiry = DateTime.now().add(Duration(minutes: tokenExpirationMinutes));
   }
 

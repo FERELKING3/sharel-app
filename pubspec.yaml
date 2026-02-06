@@ -56,6 +56,9 @@ dependencies:
   permission_handler: ^11.3.1
   file_picker: ^8.1.2
   photo_manager: ^3.6.3
+  crypto: ^3.0.2
+  uuid: ^4.5.2
+  json_annotation: ^4.10.0
   # on_audio_query: ^2.9.0 (Désactivé temporairement pour compatibilité AGP 8)
 
 dev_dependencies:

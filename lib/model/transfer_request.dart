@@ -4,7 +4,7 @@ part 'transfer_request.freezed.dart';
 part 'transfer_request.g.dart';
 
 @freezed
-class TransferRequest with _$TransferRequest {
+abstract class TransferRequest with _$TransferRequest {
   const factory TransferRequest({
     required String requestId,
     required String deviceName,
@@ -18,12 +18,12 @@ class TransferRequest with _$TransferRequest {
 }
 
 @freezed
-class TransferApproval with _$TransferApproval {
+abstract class TransferApproval with _$TransferApproval {
   const factory TransferApproval({
     required String requestId,
     required bool approved,
     required DateTime respondedAt,
-    bool? rememberDevice = false,
+    @Default(false) bool rememberDevice,
   }) = _TransferApproval;
 
   factory TransferApproval.fromJson(Map<String, dynamic> json) =>
@@ -31,7 +31,7 @@ class TransferApproval with _$TransferApproval {
 }
 
 @freezed
-class TrustedDevice with _$TrustedDevice {
+abstract class TrustedDevice with _$TrustedDevice {
   const factory TrustedDevice({
     required String deviceId,
     required String deviceName,
