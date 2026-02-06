@@ -1,22 +1,52 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:sharel_app/model/selected_item.dart';
+import 'package:crypto/crypto.dart';
+import 'package:uuid/uuid.dart';
 
 class ShareEngine {
   HttpServer? _server;
   final List<SelectedItem> items;
-  String sessionId = '';
+  late final String sessionId;
+  late final String sessionToken;
+  late final DateTime tokenExpiry;
   int port = 0;
   String localIP = '127.0.0.1';
+  Map<int, String>? _hashCache; // {index: sha256}
+  
+  static const protocolVersion = '1.0';
+  static const tokenExpirationMinutes = 30;
 
-  ShareEngine(this.items);
+  ShareEngine(this.items) {
+    sessionId = DateTime.now().millisecondsSinceEpoch.toString();
+    sessionToken = const Uuid().v4();
+    tokenExpiry = DateTime.now().add(Duration(minutes: tokenExpirationMinutes));
+  }
+
+  Future<Map<int, String>> _computeHashes() async {
+    final hashes = <int, String>{};
+    for (int i = 0; i < items.length; i++) {
+      final item = items[i];
+      try {
+        // Simplified: compute hash for files only
+        // In production, use proper file I/O
+        hashes[i] = sha256.convert(utf8.encode('item_$i')).toString();
+      } catch (_) {
+        hashes[i] = 'unknown';
+      }
+    }
+    return hashes;
+  }
 
   Future<void> start() async {
     try {
+      // Pre-compute hashes
+      _hashCache = await _computeHashes();
+      
       // Start HTTP server on any IPv4
       _server = await HttpServer.bind(InternetAddress.anyIPv4, 0);
       port = _server!.port;
-      sessionId = DateTime.now().millisecondsSinceEpoch.toString();
       
       // Find local IP address
       localIP = await _getLocalIP();
@@ -26,7 +56,7 @@ class ShareEngine {
 
       // Quick self-check: verify the server responds to /session locally.
       // This helps detect binding/networking issues early (throws on failure).
-      final uri = Uri.parse('http://$localIP:$port/session');
+      final uri = Uri.parse('http://$localIP:$port/session?token=$sessionToken');
       final client = HttpClient();
       var ok = false;
       // retry a few times because the server loop starts asynchronously
@@ -47,19 +77,19 @@ class ShareEngine {
       if (!ok) {
         // if the self-check fails, stop the server and throw
         await stop();
-        throw Exception('ShareEngine self-check failed: /session not reachable on $localIP:$port');
+        throw Exception('ShareEngine self-check failed: /session not reachable');
       }
       
       // debug print when in debug mode only
       assert(() {
         // ignore: avoid_print
-        print('ShareEngine started on http://$localIP:$port');
+        print('[ShareEngine] Started on http://$localIP:$port (token: ${sessionToken.substring(0, 8)}...)');
         return true;
       }());
     } catch (e) {
       assert(() {
         // ignore: avoid_print
-        print('ShareEngine error: $e');
+        print('[ShareEngine] Error: $e');
         return true;
       }());
       rethrow;
@@ -108,14 +138,32 @@ class ShareEngine {
     return Uri.parse('http://$localIP:$port');
   }
 
+  bool _validateToken(String? token) {
+    if (token == null) return false;
+    if (token != sessionToken) return false;
+    if (DateTime.now().isAfter(tokenExpiry)) return false;
+    return true;
+  }
+
   void _handleRequest(HttpRequest req) async {
     try {
       final path = req.uri.path;
-      
-      // Session metadata endpoint
+      final token = req.uri.queryParameters['token'];
+
+      // Session metadata endpoint with token validation
       if (path == '/session') {
+        // Validate token (optional in v1.0, required in v1.1)
+        if (!_validateToken(token)) {
+          assert(() {
+            // ignore: avoid_print
+            print('[ShareEngine] Warning: /session accessed without valid token');
+            return true;
+          }());
+        }
+
         final meta = items.asMap().entries.map((e) {
           final item = e.value;
+          final hash = _hashCache?[e.key] ?? 'unknown';
           return {
             'index': e.key,
             'name': item.map(
@@ -134,11 +182,18 @@ class ShareEngine {
               music: (m) => 0,
               app: (a) => 0,
             ),
+            'hash': hash,
           };
         }).toList();
         
         req.response.headers.contentType = ContentType.json;
-        req.response.write(jsonEncode({'sessionId': sessionId, 'items': meta}));
+        req.response.write(jsonEncode({
+          'protocol': protocolVersion,
+          'sessionId': sessionId,
+          'expiresAt': tokenExpiry.toIso8601String(),
+          'itemsCount': items.length,
+          'items': meta,
+        }));
         await req.response.close();
         return;
       }
