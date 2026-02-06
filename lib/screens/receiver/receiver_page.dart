@@ -32,6 +32,10 @@ class _ReceiverPageState extends State<ReceiverPage> {
         title: Text('Recevoir', style: theme.textTheme.headlineMedium),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
       ),
       body: _isLoading ? _buildLoading() : _buildContent(),
     );

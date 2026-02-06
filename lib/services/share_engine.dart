@@ -23,6 +23,32 @@ class ShareEngine {
       
       // Start listening for requests
       _server!.listen(_handleRequest);
+
+      // Quick self-check: verify the server responds to /session locally.
+      // This helps detect binding/networking issues early (throws on failure).
+      final uri = Uri.parse('http://$localIP:$port/session');
+      final client = HttpClient();
+      var ok = false;
+      // retry a few times because the server loop starts asynchronously
+      for (var attempt = 0; attempt < 5; attempt++) {
+        try {
+          final req = await client.getUrl(uri).timeout(const Duration(seconds: 2));
+          final res = await req.close().timeout(const Duration(seconds: 2));
+          if (res.statusCode == HttpStatus.ok) {
+            ok = true;
+            await res.drain();
+            break;
+          }
+        } catch (_) {
+          await Future.delayed(const Duration(milliseconds: 200));
+        }
+      }
+      client.close(force: true);
+      if (!ok) {
+        // if the self-check fails, stop the server and throw
+        await stop();
+        throw Exception('ShareEngine self-check failed: /session not reachable on $localIP:$port');
+      }
       
       // debug print when in debug mode only
       assert(() {

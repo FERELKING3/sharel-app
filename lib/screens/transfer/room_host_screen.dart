@@ -68,7 +68,14 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
     final isMobile = MediaQuery.of(context).size.width < 600;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Room Host'), elevation: 0),
+        appBar: AppBar(
+          title: const Text('Créer une room'),
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
+        ),
       body: _uri == null
           ? Center(
               child: Column(

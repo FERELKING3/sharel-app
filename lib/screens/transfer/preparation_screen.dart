@@ -2,7 +2,10 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../viewmodel/selection_viewmodel.dart';
+import '../../providers/permission_provider.dart';
+import '../../core/theme/design_system.dart';
 
 class PreparationScreen extends ConsumerWidget {
   const PreparationScreen({super.key});
@@ -10,117 +13,143 @@ class PreparationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selection = ref.watch(selectionProvider);
+    final perms = ref.watch(requiredPermissionsProvider);
+    
     if (selection.isEmpty) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Préparation')),
+          appBar: AppBar(
+            title: const Text('Préparation'),
+            leading: IconButton(
+              icon: const Icon(Icons.arrow_back),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
         body: const Center(child: Text('Aucun élément sélectionné')),
       );
     }
-    final isIOS = Platform.isIOS;
     
     return Scaffold(
-      appBar: AppBar(title: const Text('Préparation du transfert')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Prérequis de transfert', style: Theme.of(context).textTheme.headlineSmall),
-              const SizedBox(height: 20),
-              _PrerequisItem(
-                icon: Icons.wifi,
-                title: 'WiFi',
-                description: 'Assurez-vous que le WiFi est activé et connecté',
-                status: '✓ Activé',
-              ),
-              const SizedBox(height: 12),
-              _PrerequisItem(
-                icon: Icons.location_on,
-                title: 'Réseau local',
-                description: 'Permission d\'accès au réseau local',
-                status: '✓ Accordée',
-              ),
-              const SizedBox(height: 12),
-              _PrerequisItem(
-                icon: Icons.storage,
-                title: 'Stockage',
-                description: 'Permission d\'accès au stockage',
-                status: '✓ Accordée',
-              ),
-              if (isIOS) ...[
-                const SizedBox(height: 12),
-                _PrerequisItem(
-                  icon: Icons.info,
-                  title: 'Mode iOS',
-                  description: 'Sur iOS, vous pouvez être client (rejoindre un host)',
-                  status: '⚠ Info',
-                ),
-              ],
-              const SizedBox(height: 32),
-              Text('${selection.length} élément(s) sélectionné(s)', style: Theme.of(context).textTheme.bodyLarge),
-              const SizedBox(height: 20),
-              Text('Choisissez votre rôle :', style: Theme.of(context).textTheme.bodyMedium),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => context.go('/transfer/host'),
-                  icon: const Icon(Icons.cloud_upload),
-                  label: const Text('Créer une room (Host)'),
-                ),
-              ),
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => context.go('/transfer/join'),
-                  icon: const Icon(Icons.input),
-                  label: const Text('Rejoindre (Client)'),
-                ),
-              ),
-            ],
+      appBar: AppBar(
+        title: const Text('Prérequis de transfert'),
+        elevation: 0,
+      ),
+      body: perms.when(
+        loading: () => const Center(child: CircularProgressIndicator()),
+        error: (err, stack) => Center(child: Text('Erreur: $err')),
+        data: (permissions) => _buildContent(context, selection, permissions, ref),
+      ),
+    );
+  }
+
+  Widget _buildContent(
+    BuildContext context,
+    Set selection,
+    Map<String, PermissionStatus> permissions,
+    WidgetRef ref,
+  ) {
+    final theme = Theme.of(context);
+    final isMobile = MediaQuery.of(context).size.width < 600;
+
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(isMobile ? AppTheme.spacing16 : AppTheme.spacing24),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Autorisations requises',
+            style: theme.textTheme.headlineSmall,
           ),
-        ),
+          SizedBox(height: AppTheme.spacing16),
+          ...permissions.entries.map((e) => Padding(
+            padding: EdgeInsets.only(bottom: AppTheme.spacing12),
+            child: _PermissionItem(
+              title: e.key,
+              isGranted: e.value.isGranted,
+              isDenied: e.value.isDenied,
+            ),
+          )),
+          SizedBox(height: AppTheme.spacing32),
+          Text(
+            '${selection.length} élément(s) sélectionné(s)',
+            style: theme.textTheme.bodyLarge,
+          ),
+          SizedBox(height: AppTheme.spacing20),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                if (permissions.values.every((s) => s.isGranted)) {
+                  context.go('/transfer/host');
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Veuillez accepter toutes les autorisations'),
+                    ),
+                  );
+                }
+              },
+              icon: const Icon(Icons.cloud_upload),
+              label: const Text('Créer une room'),
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _PrerequisItem extends StatelessWidget {
-  final IconData icon;
+class _PermissionItem extends StatelessWidget {
   final String title;
-  final String description;
-  final String status;
+  final bool isGranted;
+  final bool isDenied;
   
-  const _PrerequisItem({
-    required this.icon,
+  const _PermissionItem({
     required this.title,
-    required this.description,
-    required this.status,
+    required this.isGranted,
+    required this.isDenied,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12.0),
-        child: Row(
-          children: [
-            Icon(icon, size: 32),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title, style: Theme.of(context).textTheme.bodyLarge),
-                  Text(description, style: Theme.of(context).textTheme.bodySmall),
-                ],
-              ),
-            ),
-            Text(status, style: Theme.of(context).textTheme.bodySmall),
-          ],
+    final theme = Theme.of(context);
+    final statusColor = isGranted ? Colors.green : Colors.red;
+    final statusIcon = isGranted ? Icons.check_circle : Icons.cancel;
+    final statusText = isGranted ? 'Accordée' : 'Refusée';
+
+    return Container(
+      padding: EdgeInsets.all(AppTheme.spacing12),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color: statusColor.withValues(alpha: 0.3),
+          width: 1,
         ),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Row(
+        children: [
+          Icon(statusIcon, color: statusColor, size: 24),
+          SizedBox(width: AppTheme.spacing12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            statusText,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: statusColor,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }

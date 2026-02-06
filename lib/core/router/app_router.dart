@@ -31,8 +31,8 @@ final appRouter = GoRouter(
       builder: (context, state, child) => AppShell(child: child),
       routes: [
         GoRoute(
-      path: '/',
-      builder: (context, state) => const HomePage(),
+          path: '/',
+          builder: (context, state) => const HomePage(),
         ),
         GoRoute(
           path: '/files',

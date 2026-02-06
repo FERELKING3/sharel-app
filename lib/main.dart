@@ -4,6 +4,16 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:sharel_app/l10n/app_localizations.dart';
 import 'core/theme/design_system.dart';
 import 'core/router/app_router.dart';
+import 'services/permission_service.dart';
+
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // Request storage/media permission at app launch (Android 11+ handling inside)
+  try {
+    await PermissionService.requestStoragePermission();
+  } catch (_) {}
+  runApp(const ProviderScope(child: SharelApp()));
+}
 
 void main() {
   runApp(const ProviderScope(child: SharelApp()));

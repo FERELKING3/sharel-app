@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../viewmodel/selection_viewmodel.dart';
+import '../../widgets/selected_items_expansion.dart';
 import 'tabs/contacts_tab.dart';
 import 'tabs/files_tab.dart';
 import 'tabs/videos_tab.dart';
@@ -36,12 +37,17 @@ class _SenderPageState extends ConsumerState<SenderPage>
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final selectedCount = ref.watch(selectionProvider).length;
+      final selection = ref.watch(selectionProvider);
 
     return Scaffold(
       appBar: AppBar(
         title: Text('Envoyer', style: theme.textTheme.headlineMedium),
         backgroundColor: theme.colorScheme.primary,
         foregroundColor: theme.colorScheme.onPrimary,
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: () => Navigator.pop(context),
+          ),
         bottom: TabBar(
           controller: _tabController,
           isScrollable: true,
@@ -55,7 +61,14 @@ class _SenderPageState extends ConsumerState<SenderPage>
           ],
         ),
       ),
-      body: TabBarView(
+        body: Column(
+          children: [
+            if (selectedCount > 0)
+              SelectedItemsExpansion(
+                items: selection,
+              ),
+            Expanded(
+              child: TabBarView(
         controller: _tabController,
         children: const [
           ContactsTab(),
@@ -65,7 +78,10 @@ class _SenderPageState extends ConsumerState<SenderPage>
           PhotosTab(),
           MusicTab(),
         ],
-      ),
+              ),
+            ),
+          ],
+        ),
       bottomNavigationBar: selectedCount > 0
           ? BottomAppBar(
               child: Row(

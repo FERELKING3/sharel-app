@@ -1,13 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:sharel_app/l10n/app_localizations.dart';
+import '../../providers/role_provider.dart';
 import '../../core/theme/design_system.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends ConsumerWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
     final size = MediaQuery.of(context).size;
     final isMobile = size.width < 600;
@@ -144,7 +146,10 @@ class HomePage extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                onTap: () => context.go('/sender'),
+                onTap: () {
+                  ref.read(transferRoleProvider.notifier).state = TransferRole.sender;
+                  context.go('/sender');
+                },
               ),
             ),
             SizedBox(width: AppTheme.spacing12),
@@ -161,7 +166,10 @@ class HomePage extends StatelessWidget {
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                 ),
-                onTap: () => context.go('/receive/preparation'),
+                onTap: () {
+                  ref.read(transferRoleProvider.notifier).state = TransferRole.receiver;
+                  context.go('/receive/preparation');
+                },
               ),
             ),
             SizedBox(width: AppTheme.spacing12),
