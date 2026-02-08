@@ -67,7 +67,6 @@ class AppTheme {
     appBarStyle: FlexAppBarStyle.primary,
     visualDensity: VisualDensity.adaptivePlatformDensity,
     fontFamily: 'Roboto',
-    surfaceMode: FlexSurfaceMode.light,
   ).copyWith(
     useMaterial3: true,
     scaffoldBackgroundColor: AppColors.surfaceLight,
@@ -90,7 +89,7 @@ class AppTheme {
         color: AppColors.textDark,
       ),
     ),
-    tabBarTheme: const TabBarTheme(
+    tabBarTheme: const TabBarThemeData(
       labelColor: AppColors.primary,
       unselectedLabelColor: AppColors.textGrey,
       indicator: UnderlineTabIndicator(

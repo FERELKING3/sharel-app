@@ -10,7 +10,12 @@ import '../../services/share_engine.dart';
 import '../../model/selected_item.dart';
 
 class PreparationScreen extends ConsumerWidget {
-  const PreparationScreen({super.key});
+  final TransferRole role;
+
+  const PreparationScreen({
+    super.key,
+    required this.role,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
