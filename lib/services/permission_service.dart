@@ -89,12 +89,50 @@ class PermissionService {
     return status;
   }
 
-  /// Get all required permissions status (with optional role filtering)
-  /// Sender (client) role skips Camera and All Files Access (already requested at startup)
-  /// Receiver (host) role includes all permissions
-  static Future<Map<String, PermissionStatus>> getRequiredPermissions({bool isSender = false}) async {
+  /// Get required permissions by context
+  /// - "preparation": Network only (WiFi, Local Network) - no camera/storage
+  /// - "selection": Media permissions for file/contact selection
+  /// - "qr_scan": Camera permission only
+  /// - "default": All permissions (legacy, not recommended)
+  static Future<Map<String, PermissionStatus>> getRequiredPermissions({
+    bool isSender = false,
+    String context = 'default',
+  }) async {
     final perms = <String, PermissionStatus>{};
 
+    // PREPARATION context: only network-related (no camera, storage, media)
+    if (context == 'preparation') {
+      if (Platform.isIOS) {
+        perms['Local Network'] = PermissionStatus.granted; // Placeholder
+      }
+      return perms;
+    }
+
+    // QR_SCAN context: only camera
+    if (context == 'qr_scan') {
+      if (Platform.isAndroid || Platform.isIOS) {
+        perms['Camera'] = await Permission.camera.status;
+      }
+      return perms;
+    }
+
+    // SELECTION context: media/contact permissions for file selection
+    if (context == 'selection') {
+      if (Platform.isAndroid) {
+        final version = _getAndroidVersion();
+        if (version >= 13) {
+          perms['Photos'] = await Permission.photos.status;
+          perms['Videos'] = await Permission.videos.status;
+          perms['Audio'] = await Permission.audio.status;
+        }
+      }
+      if (Platform.isAndroid || Platform.isIOS) {
+        perms['Contacts'] = await Permission.contacts.status;
+      }
+      return perms;
+    }
+
+    // DEFAULT context (legacy): all permissions
     if (Platform.isAndroid) {
       final version = _getAndroidVersion();
 

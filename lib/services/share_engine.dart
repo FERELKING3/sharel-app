@@ -163,9 +163,53 @@ class ShareEngine {
     try {
       final path = req.uri.path;
       final token = req.uri.queryParameters['token'];
+      final method = req.method.toUpperCase();
+
+      // Root endpoint - HTML page
+      if (path == '/' && method == 'GET') {
+        req.response.headers.contentType = ContentType.html;
+        req.response.write('''<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SHAREL Host</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; margin: 0; padding: 20px; background: #f5f5f5; }
+    .container { max-width: 600px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    h1 { color: #0066FF; margin-top: 0; }
+    p { color: #666; line-height: 1.6; }
+    .endpoint { background: #f9f9f9; padding: 12px; margin: 8px 0; border-left: 4px solid #0066FF; font-family: monospace; font-size: 13px; }
+    .status { padding: 12px; background: #e8f5e9; border-radius: 8px; color: #2e7d32; margin: 16px 0; }
+    a { color: #0066FF; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🚀 SHAREL Host</h1>
+    <div class="status">✓ Serveur actif et prêt à recevoir des fichiers</div>
+    <p><strong>Adresse serveur:</strong> http://$localIP:$port</p>
+    <h3>Endpoints disponibles:</h3>
+    <div class="endpoint">GET /session - Métadonnées de transfert (JSON)</div>
+    <div class="endpoint">GET /file/:index - Télécharger un fichier</div>
+    <div class="endpoint">POST /handshake - Validation de session</div>
+    <p><strong>Informations de session:</strong></p>
+    <ul>
+      <li>Session ID: <code>$sessionId</code></li>
+      <li>Fichiers: <code>${items.length}</code></li>
+      <li>Expire: <code>${tokenExpiry.toIso8601String()}</code></li>
+    </ul>
+    <p><a href="/session">→ Afficher les métadonnées JSON</a></p>
+  </div>
+</body>
+</html>''');
+        await req.response.close();
+        return;
+      }
 
       // Session metadata endpoint with token validation
-      if (path == '/session') {
+      if (path == '/session' && method == 'GET') {
         // Validate token (optional in v1.0, required in v1.1)
         if (!_validateToken(token)) {
           assert(() {
@@ -203,8 +247,12 @@ class ShareEngine {
 
         req.response.headers.contentType = ContentType.json;
         req.response.write(jsonEncode({
+          'app': 'sharel',
+          'role': 'host',
           'protocol': protocolVersion,
           'sessionId': sessionId,
+          'deviceName': 'SHAREL Device',
+          'filesExpected': items.length,
           'expiresAt': tokenExpiry.toIso8601String(),
           'itemsCount': items.length,
           'items': meta,
@@ -214,8 +262,34 @@ class ShareEngine {
         return;
       }
 
+      // Handshake endpoint - validate token and session
+      if (path == '/handshake' && method == 'POST') {
+        if (!_validateToken(token)) {
+          req.response.statusCode = HttpStatus.unauthorized;
+          req.response.headers.contentType = ContentType.json;
+          req.response.write(jsonEncode({
+            'status': 'error',
+            'message': 'Invalid or expired token',
+          }));
+          await req.response.close();
+          LoggerService.log('POST /handshake - Unauthorized', component: 'ShareEngine');
+          return;
+        }
+
+        req.response.statusCode = HttpStatus.ok;
+        req.response.headers.contentType = ContentType.json;
+        req.response.write(jsonEncode({
+          'status': 'success',
+          'sessionId': sessionId,
+          'message': 'Session validated',
+        }));
+        await req.response.close();
+        LoggerService.log('POST /handshake - Session validated', component: 'ShareEngine');
+        return;
+      }
+
       // File download endpoint
-      if (path.startsWith('/file/')) {
+      if (path.startsWith('/file/') && method == 'GET') {
         final parts = path.split('/');
         if (parts.length >= 3) {
           final idx = int.tryParse(parts[2]);
@@ -257,9 +331,10 @@ class ShareEngine {
       }
 
       // 404
-      LoggerService.log('GET $path - Not found', component: 'ShareEngine');
+      LoggerService.log('$method $path - Not found', component: 'ShareEngine');
       req.response.statusCode = HttpStatus.notFound;
-      req.response.write('Not found');
+      req.response.headers.contentType = ContentType.html;
+      req.response.write('<html><body><h1>404 Not Found</h1><p>SHAREL Server - $path not found</p></body></html>');
       await req.response.close();
     } catch (e) {
       assert(() {
@@ -270,7 +345,8 @@ class ShareEngine {
       }());
       try {
         req.response.statusCode = HttpStatus.internalServerError;
-        req.response.write('Server error');
+        req.response.headers.contentType = ContentType.json;
+        req.response.write(jsonEncode({'status': 'error', 'message': 'Server error'}));
         await req.response.close();
       } catch (_) {
         // Response already closed

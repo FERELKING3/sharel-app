@@ -98,26 +98,24 @@ class _SelectedItemsExpansionState extends State<SelectedItemsExpansion> {
   }
 
   IconData _getItemIcon(SelectedItem item) {
-      // ignore: unnecessary_underscores
-      return item.when(
-      contact: (_, __, ___) => Icons.person,
+    return item.when(
+      contact: (_, _, _) => Icons.person,
       file: (path, name, size) => Icons.insert_drive_file,
-      video: (_, __, ___, ____) => Icons.video_library,
-      photo: (_, __, ___) => Icons.image,
-      music: (_, __, ___, ____, _____) => Icons.music_note,
-      app: (_, __, ___) => Icons.apps,
+      video: (_, _, _, _) => Icons.video_library,
+      photo: (_, _, _) => Icons.image,
+      music: (_, _, _, _, _) => Icons.music_note,
+      app: (_, _, _) => Icons.apps,
     );
   }
 
   String _getItemName(SelectedItem item) {
-    // ignore: unnecessary_underscores
     return item.when(
-      contact: (_, name, __) => name,
+      contact: (_, name, _) => name,
       file: (path, name, size) => name,
-      video: (_, __, title, ___) => title,
-      photo: (_, __, ___) => 'Photo',
-      music: (_, __, title, ___, ____) => title,
-      app: (_, name, __) => name,
+      video: (_, _, title, _) => title,
+      photo: (_, _, _) => 'Photo',
+      music: (_, _, title, _, _) => title,
+      app: (_, name, _) => name,
     );
   }
 }

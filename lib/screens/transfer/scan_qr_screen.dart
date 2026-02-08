@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import '../../services/permission_service.dart';
 
 class ScanQrScreen extends ConsumerStatefulWidget {
   const ScanQrScreen({super.key});
@@ -12,6 +13,27 @@ class ScanQrScreen extends ConsumerStatefulWidget {
 
 class _ScanQrScreenState extends ConsumerState<ScanQrScreen> {
   MobileScannerController cameraController = MobileScannerController();
+
+  @override
+  void initState() {
+    super.initState();
+    _requestCameraPermission();
+  }
+
+  Future<void> _requestCameraPermission() async {
+    final status = await PermissionService.requestCameraPermission();
+    if (mounted && !status.isGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Permission caméra requise pour scanner QR'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      if (context.canPop()) {
+        context.pop();
+      }
+    }
+  }
 
   @override
   void dispose() {

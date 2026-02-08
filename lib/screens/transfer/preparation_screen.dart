@@ -21,7 +21,7 @@ class PreparationScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selection = ref.watch(selectionProvider);
-    final perms = ref.watch(requiredPermissionsProvider);
+    final perms = ref.watch(requiredPermissionsProvider('preparation'));
     
     if (selection.isEmpty) {
       return PopScope(

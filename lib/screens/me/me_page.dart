@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/theme.dart';
+import '../../core/theme/design_system.dart';
 
 class MePage extends StatelessWidget {
   const MePage({super.key});
