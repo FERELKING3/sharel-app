@@ -189,8 +189,8 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                 style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
               ),
               SizedBox(height: AppTheme.spacing12),
-              ..._discoveredServers.map((server) {
-                return GestureDetector(
+              for (final server in _discoveredServers)
+                GestureDetector(
                   onTap: () => _connectToServer(server['ip']!, server['port']!),
                   child: Container(
                     margin: EdgeInsets.only(bottom: AppTheme.spacing12),
@@ -245,8 +245,7 @@ class _DiscoveryScreenState extends ConsumerState<DiscoveryScreen> {
                       ],
                     ),
                   ),
-                );
-              }).toList()),
+                ),
               SizedBox(height: AppTheme.spacing24),
             ],
 

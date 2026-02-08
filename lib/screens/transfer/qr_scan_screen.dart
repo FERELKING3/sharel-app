@@ -22,7 +22,7 @@ class _QRScanScreenState extends State<QRScanScreen> {
 
   Future<void> _requestCameraPermission() async {
     final status = await PermissionService.requestCameraPermission();
-    if (mounted && !status.isGranted) {
+    if (mounted && status.isDenied) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Permission caméra requise pour scanner QR'),
