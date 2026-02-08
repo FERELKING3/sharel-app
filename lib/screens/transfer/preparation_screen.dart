@@ -244,7 +244,7 @@ class _PermissionItem extends ConsumerWidget {
                   ),
                   if (!isGranted)
                     Padding(
-                      padding: EdgeInsets.only(top: AppTheme.spacing4),
+                      padding: EdgeInsets.only(top: AppTheme.spacing8),
                       child: Text(
                         isPermanentlyDenied
                             ? 'Tapez pour activer dans les paramètres'
@@ -277,6 +277,7 @@ class _PermissionItem extends ConsumerWidget {
   ) async {
     try {
       debugPrint('[_PermissionItem] Requesting permission: $title');
+      final label = PermissionService.getPermissionLabel(title);
       
       PermissionStatus status;
       switch (permissionKey) {
