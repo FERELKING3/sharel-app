@@ -62,16 +62,15 @@ class ShareEngine {
       // Start HTTP server with SO_REUSEADDR to allow fast rebind
       await _log('Binding server to anyIPv4:0 with SO_REUSEADDR...');
       try {
-        final serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, 0, backlog: 5, shared: true);
-        _server = HttpServer.listenOn(serverSocket);
+        _server = await HttpServer.bind(InternetAddress.anyIPv4, 0, backlog: 5, shared: true);
         port = _server!.port;
-        await _log('Server bound to port $port with socket reuse enabled');
+        await _log('Server bound to port $port with SO_REUSEADDR enabled');
       } catch (e) {
-        // Fallback: use standard bind
+        // Fallback: use standard bind without shared flag
         debugPrint('[ShareEngine] SO_REUSEADDR bind failed, using standard bind: $e');
         _server = await HttpServer.bind(InternetAddress.anyIPv4, 0);
         port = _server!.port;
-        await _log('Server bound to port $port (standard bind)');
+        await _log('Server bound to port $port (standard bind fallback)');
       }
       
       // Find local IP address
