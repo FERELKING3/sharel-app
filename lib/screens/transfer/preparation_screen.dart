@@ -22,13 +22,14 @@ class PreparationScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selection = ref.watch(selectionProvider);
     final perms = ref.watch(requiredPermissionsProvider('preparation'));
-    
-    if (selection.isEmpty) {
+    // If role is sender we must have a selection, but for receiver
+    // we don't require selected items — only permissions.
+    if (role == TransferRole.sender && selection.isEmpty) {
       return PopScope(
         canPop: true,
         onPopInvokedWithResult: (didPop, result) {
-          if (didPop) {
-            debugPrint('[PreparationScreen] Popped - no items selected');
+          if (!didPop && context.canPop()) {
+            context.pop();
           }
         },
         child: Scaffold(
@@ -36,11 +37,7 @@ class PreparationScreen extends ConsumerWidget {
             title: const Text('Préparation'),
             leading: IconButton(
               icon: const Icon(Icons.arrow_back),
-              onPressed: () {
-                if (context.canPop()) {
-                  context.pop();
-                }
-              },
+              onPressed: () => context.pop(),
             ),
           ),
           body: const Center(
@@ -53,8 +50,8 @@ class PreparationScreen extends ConsumerWidget {
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {
-          debugPrint('[PreparationScreen] Popped - returning to previous screen');
+        if (!didPop && context.canPop()) {
+          context.pop();
         }
       },
       child: Scaffold(
@@ -63,11 +60,7 @@ class PreparationScreen extends ConsumerWidget {
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              if (context.canPop()) {
-                context.pop();
-              }
-            },
+            onPressed: () => context.pop(),
           ),
         ),
         body: perms.when(
@@ -85,6 +78,22 @@ class PreparationScreen extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  // When role == receiver, this will navigate to the receiver page
+  // once needed permissions are granted.
+  void _continueAsReceiver(BuildContext context, Map<String, PermissionStatus> permissions) {
+    final allGranted = permissions.values.every((s) => s.isGranted);
+    if (!allGranted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Veuillez accepter les permissions pour continuer')),
+      );
+      return;
+    }
+
+    if (context.mounted) {
+      context.go('/receiver');
+    }
   }
 
   Widget _buildContent(
@@ -132,12 +141,20 @@ class PreparationScreen extends ConsumerWidget {
                   size: 20,
                 ),
                 SizedBox(width: AppTheme.spacing12),
-                Expanded(
-                  child: Text(
-                    '${selection.length} élément(s) sélectionné(s)',
-                    style: theme.textTheme.bodyMedium,
-                  ),
-                ),
+                  if (role == TransferRole.sender)
+                    Expanded(
+                      child: Text(
+                        '${selection.length} élément(s) sélectionné(s)',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    )
+                  else
+                    Expanded(
+                      child: Text(
+                        'Mode Récepteur — aucune sélection requise',
+                        style: theme.textTheme.bodyMedium,
+                      ),
+                    ),
               ],
             ),
           ),
@@ -145,11 +162,13 @@ class PreparationScreen extends ConsumerWidget {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
-              onPressed: allGranted
-                  ? () => _startTransfer(context, selection, ref)
-                  : null,
-              icon: const Icon(Icons.cloud_upload),
-              label: const Text('Créer une room'),
+                onPressed: allGranted
+                    ? (role == TransferRole.sender
+                        ? () => _startTransfer(context, selection, ref)
+                        : () => _continueAsReceiver(context, permissions))
+                    : null,
+                icon: Icon(role == TransferRole.sender ? Icons.cloud_upload : Icons.download_rounded),
+                label: Text(role == TransferRole.sender ? 'Créer une room' : 'Continuer vers Recevoir'),
             ),
           ),
           if (!allGranted) ...[

@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:photo_manager/photo_manager.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'dart:io';
 
 class MediaState {
   final List<AssetEntity> assets;
@@ -39,7 +40,13 @@ class VideosViewModel extends StateNotifier<MediaState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final permission = await Permission.photos.request();
+      // Request platform-appropriate permission
+      PermissionStatus permission;
+      if (Platform.isAndroid) {
+        permission = await Permission.storage.request();
+      } else {
+        permission = await Permission.photos.request();
+      }
       if (!permission.isGranted) {
         state = state.copyWith(
           isLoading: false,
@@ -101,7 +108,13 @@ class PhotosViewModel extends StateNotifier<MediaState> {
     state = state.copyWith(isLoading: true, error: null);
 
     try {
-      final permission = await Permission.photos.request();
+      // Request platform-appropriate permission
+      PermissionStatus permission;
+      if (Platform.isAndroid) {
+        permission = await Permission.storage.request();
+      } else {
+        permission = await Permission.photos.request();
+      }
       if (!permission.isGranted) {
         state = state.copyWith(
           isLoading: false,

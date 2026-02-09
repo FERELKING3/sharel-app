@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
-// qr_flutter removed for compatibility with multiple package versions
+import 'package:qr_flutter/qr_flutter.dart';
 import '../../core/theme/design_system.dart';
 import '../../viewmodel/selection_viewmodel.dart';
 import '../../viewmodel/transfer_viewmodel.dart';
@@ -67,15 +68,32 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
 
   void _copyToClipboard() {
     if (_uri != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Adresse copiée'), duration: Duration(seconds: 2)),
-      );
-      setState(() {
-        _copied = true;
-        Future.delayed(const Duration(seconds: 2), () {
-          if (mounted) setState(() => _copied = false);
+      try {
+        Clipboard.setData(ClipboardData(text: _uri!.toString())).then((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Adresse copiée au presse-papiers'),
+              duration: Duration(seconds: 2),
+            ),
+          );
+          setState(() {
+            _copied = true;
+            Future.delayed(const Duration(seconds: 2), () {
+              if (mounted) setState(() => _copied = false);
+            });
+          });
+        }).catchError((e) {
+          debugPrint('Failed to copy: $e');
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Erreur lors de la copie'),
+              backgroundColor: Colors.red,
+            ),
+          );
         });
-      });
+      } catch (e) {
+        debugPrint('Error setting clipboard: $e');
+      }
     }
   }
 
@@ -89,8 +107,8 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, result) {
-        if (didPop) {
-          debugPrint('[RoomHostScreen] Popped - stopping host');
+        if (!didPop && context.canPop()) {
+          context.pop();
         }
       },
       child: Scaffold(
@@ -99,12 +117,7 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
           elevation: 0,
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
-            onPressed: () {
-              if (context.canPop()) {
-                debugPrint('[RoomHostScreen] Back button pressed');
-                context.pop();
-              }
-            },
+            onPressed: () => context.pop(),
           ),
         ),
         body: _uri == null
@@ -193,16 +206,19 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
                         ],
                       ),
                       child: Column(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
+                          QrImageView(
+                            data: _uri!.toString(),
+                            version: QrVersions.auto,
+                            size: 200,
+                            gapless: false,
+                            errorCorrectionLevel: QrErrorCorrectLevel.H,
+                          ),
+                          const SizedBox(height: 12),
                           SelectableText(
                             _uri!.toString(),
                             style: theme.textTheme.bodyMedium?.copyWith(fontFamily: 'monospace'),
-                          ),
-                          const SizedBox(height: 12),
-                          Text(
-                            'Si vous avez besoin d’un QR, générez-le depuis le client ou utilisez l’adresse ci‑dessous',
-                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.outline),
-                            textAlign: TextAlign.center,
                           ),
                         ],
                       ),

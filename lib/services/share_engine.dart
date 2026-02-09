@@ -7,6 +7,7 @@ import 'package:sharel_app/services/storage_service.dart';
 import 'package:sharel_app/services/logger_service.dart';
 import 'package:crypto/crypto.dart';
 import 'package:uuid/uuid.dart';
+import 'package:sharel_app/services/mdns_service.dart';
 
 class ShareEngine {
   HttpServer? _server;
@@ -104,6 +105,20 @@ class ShareEngine {
       await _log('Session token: ${sessionToken.substring(0, 8)}...');
       await _log('Items count: ${items.length}');
       await _log('[SERVER_READY] Server is ready to receive connections at http://$localIP:$port/session?token=$sessionToken');
+      // Publish service via mDNS/UDP fallback so clients can discover this host
+      try {
+        await MDnsService().publishService(
+          name: 'SHAREL Device',
+          port: port,
+          txt: {
+            'session': sessionId,
+            'token': sessionToken.substring(0, 8),
+          },
+        );
+        await _log('Published mDNS/UDP advertisement');
+      } catch (e) {
+        await _log('Failed to publish mDNS advertisement: $e');
+      }
     } catch (e) {
       await _log('✗ CRITICAL ERROR during startup: $e');
       rethrow;
@@ -114,6 +129,9 @@ class ShareEngine {
     try {
       await _server?.close(force: true);
       _server = null;
+      try {
+        await MDnsService().stopPublishing();
+      } catch (_) {}
     } catch (e) {
       assert(() {
         // ignore: avoid_print

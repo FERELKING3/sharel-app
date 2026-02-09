@@ -10,20 +10,7 @@ class ReceiverPage extends StatefulWidget {
 }
 
 class _ReceiverPageState extends State<ReceiverPage> {
-  bool _isLoading = true;
-
-  @override
-  void initState() {
-    super.initState();
-    // Simulate loading
-    Future.delayed(const Duration(seconds: 2), () {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    });
-  }
+  bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
@@ -42,26 +29,39 @@ class _ReceiverPageState extends State<ReceiverPage> {
             },
           ),
       ),
-      body: _isLoading ? _buildLoading() : _buildContent(),
+      body: _buildContent(),
     );
   }
-
-  Widget _buildLoading() {
-    return Center(
+  Widget _buildContent() {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(16.0),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(),
+          Text('Recevoir des fichiers', style: theme.textTheme.headlineSmall),
           const SizedBox(height: AppTheme.spacing16),
-          Text('Recherche de fichiers...', style: Theme.of(context).textTheme.titleMedium),
+          Text('Scannez le QR code ou collez l\'adresse fournie par l\'envoyeur.', style: theme.textTheme.bodyMedium),
+          const SizedBox(height: AppTheme.spacing24),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              icon: const Icon(Icons.qr_code_scanner),
+              label: const Text('Scanner QR / URL'),
+              onPressed: () => context.push('/transfer/join'),
+            ),
+          ),
+          const SizedBox(height: AppTheme.spacing12),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              icon: const Icon(Icons.link),
+              label: const Text('Coller l\'URL'),
+              onPressed: () => context.push('/transfer/join'),
+            ),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildContent() {
-    return Center(
-      child: Text('Écran Recevoir', style: Theme.of(context).textTheme.headlineLarge),
     );
   }
 }

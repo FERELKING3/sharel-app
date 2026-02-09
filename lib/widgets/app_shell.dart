@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter/services.dart';
 import 'package:sharel_app/l10n/app_localizations.dart';
 
 class AppShell extends StatefulWidget {
@@ -12,6 +13,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _selectedIndex = 0;
+  DateTime? _lastBackPressed;
 
   void _onNavDestinationSelected(int index) {
     setState(() => _selectedIndex = index);
@@ -38,9 +40,28 @@ class _AppShellState extends State<AppShell> {
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, _) async {
-        if (!didPop && context.canPop()) {
+        // If a nested route handled the pop, nothing to do.
+        if (didPop) return;
+
+        // If navigator can pop a route, pop it.
+        if (context.canPop()) {
           context.pop();
+          return;
         }
+
+        // Otherwise we're at the root of the shell: require double-press to exit.
+        final now = DateTime.now();
+        if (_lastBackPressed == null || now.difference(_lastBackPressed!) > const Duration(seconds: 2)) {
+          _lastBackPressed = now;
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Appuyez de nouveau pour quitter')),
+          );
+          return;
+        }
+
+        // Second press within window -> exit app
+        // Use SystemNavigator.pop to behave like typical apps.
+        SystemNavigator.pop();
       },
       child: Scaffold(
         body: widget.child,
