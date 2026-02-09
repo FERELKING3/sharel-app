@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../services/storage_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/design_system.dart';
@@ -34,11 +35,18 @@ class _WelcomePageState extends State<WelcomePage> {
         curve: Curves.easeInOut,
       );
     } else {
+      // Mark onboarding completed then navigate
+      try {
+        StorageService().setCompletedOnboarding();
+      } catch (_) {}
       context.go('/');
     }
   }
 
   void _skipOnboarding() {
+    try {
+      StorageService().setCompletedOnboarding();
+    } catch (_) {}
     context.go('/');
   }
 

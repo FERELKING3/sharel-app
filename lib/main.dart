@@ -6,6 +6,7 @@ import 'core/theme/design_system.dart';
 import 'core/router/app_router.dart';
 import 'services/permission_service.dart';
 import 'services/storage_service.dart';
+import 'package:flutter/scheduler.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -29,14 +30,30 @@ Future<void> main() async {
     debugPrint('[main] ✗ Permission request failed: $e');
   }
 
-  runApp(const ProviderScope(child: SharelApp()));
+  // Determine if we must show welcome on first run
+  bool showWelcome = false;
+  try {
+    showWelcome = !(await StorageService().hasCompletedOnboarding());
+  } catch (_) {
+    showWelcome = false;
+  }
+
+  runApp(ProviderScope(child: SharelApp(showWelcome: showWelcome)));
 }
 
 class SharelApp extends StatelessWidget {
-  const SharelApp({super.key});
+  final bool showWelcome;
+  const SharelApp({this.showWelcome = false, super.key});
 
   @override
   Widget build(BuildContext context) {
+    if (showWelcome) {
+      // navigate to welcome after first frame so router is ready
+      SchedulerBinding.instance.addPostFrameCallback((_) {
+        final router = GoRouter.of(context);
+        if (router.location != '/welcome') router.go('/welcome');
+      });
+    }
     return MaterialApp.router(
       title: 'SHAREL',
       theme: AppTheme.lightTheme,

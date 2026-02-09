@@ -34,9 +34,10 @@ class StorageService {
       
       // Obtenir le répertoire de l'app (Android/data/com.sharel.app)
       final appDocDir = await getApplicationDocumentsDirectory();
-      
-      // Créer le dossier SHAREL à la racine de Documents
-      _sharedir = Directory('${appDocDir.parent.path}/SHAREL');
+
+      // Créer le dossier SHAREL à l'intérieur du répertoire d'application
+      // (plus sûr et compatible avec environnements non Android)
+      _sharedir = Directory('${appDocDir.path}/SHAREL');
       
       debugPrint('[StorageService] SHAREL root: ${_sharedir.path}');
       
@@ -48,6 +49,31 @@ class StorageService {
     } catch (e) {
       debugPrint('[StorageService] ✗ Initialization error: $e');
       rethrow;
+    }
+  }
+
+  /// Retourne true si l'onboarding a déjà été complété
+  Future<bool> hasCompletedOnboarding() async {
+    if (!_initialized) {
+      throw StateError('StorageService not initialized. Call initialize() first.');
+    }
+    final flag = File('${_sharedir.path}/.onboarding_done');
+    return flag.existsSync();
+  }
+
+  /// Marque l'onboarding comme complété
+  Future<void> setCompletedOnboarding() async {
+    if (!_initialized) {
+      throw StateError('StorageService not initialized. Call initialize() first.');
+    }
+    final flag = File('${_sharedir.path}/.onboarding_done');
+    try {
+      if (!flag.existsSync()) {
+        await flag.create(recursive: true);
+      }
+      await flag.writeAsString('1');
+    } catch (e) {
+      debugPrint('[StorageService] Error setting onboarding flag: $e');
     }
   }
 
