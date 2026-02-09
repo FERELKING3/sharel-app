@@ -1,8 +1,9 @@
 import 'dart:async';
 import 'dart:io';
-
-import 'package:multicast_dns/multicast_dns.dart';
 import 'dart:convert';
+
+import 'package:flutter/foundation.dart';
+import 'package:multicast_dns/multicast_dns.dart';
 
 // Multicast settings for UDP fallback advertisement
 const _kMulticastAddress = '224.0.0.251';
@@ -53,9 +54,12 @@ class MDnsService {
             await for (final TxtResourceRecord txt in _client!.lookup<TxtResourceRecord>(
               ResourceRecordQuery.text(ptr.domainName),
             )) {
+              // txt.text is List<String>, each element is a key=value pair
               for (final entry in txt.text) {
                 final parts = entry.split('=');
-                if (parts.length == 2) txtMap[parts[0]] = parts[1];
+                if (parts.length >= 2) {
+                  txtMap[parts[0]] = parts.sublist(1).join('=');
+                }
               }
             }
 
@@ -110,7 +114,7 @@ class MDnsService {
 
   Future<void> stopDiscovery() async {
     try {
-      await _client?.stop();
+      _client?.stop();
     } catch (_) {}
     _client = null;
     _isRunning = false;
@@ -122,6 +126,23 @@ class MDnsService {
 
   void dispose() {
     _hostsController.close();
+  }
+
+  /// Get local IP address for advertisement
+  Future<String> _getLocalIP() async {
+    try {
+      final interfaces = await NetworkInterface.list();
+      for (final interface in interfaces) {
+        for (final addr in interface.addresses) {
+          if (addr.type == InternetAddressType.IPv4 && !addr.isLoopback) {
+            return addr.address;
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('[MDnsService] Error getting local IP: $e');
+    }
+    return '127.0.0.1';
   }
 
   /// Publish a lightweight UDP multicast advertisement as a fallback for environments
