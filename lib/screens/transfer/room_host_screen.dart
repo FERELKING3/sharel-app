@@ -211,9 +211,11 @@ class _RoomHostScreenState extends ConsumerState<RoomHostScreen> {
                           QrImageView(
                             data: _uri!.toString(),
                             version: QrVersions.auto,
-                            size: 200,
-                            gapless: false,
+                            size: 300,
+                            gapless: true,
                             errorCorrectionLevel: QrErrorCorrectLevel.H,
+                            eyeStyle: const QrEyeStyle(eyeShape: QrEyeShape.square, color: Colors.black),
+                            dataModuleStyle: const QrDataModuleStyle(dataModuleShape: QrDataModuleShape.square, color: Colors.black),
                           ),
                           const SizedBox(height: 12),
                           SelectableText(

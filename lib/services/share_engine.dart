@@ -59,11 +59,20 @@ class ShareEngine {
       // Pre-compute hashes
       _hashCache = await _computeHashes();
       
-      // Start HTTP server on any IPv4
-      await _log('Binding server to anyIPv4:0...');
-      _server = await HttpServer.bind(InternetAddress.anyIPv4, 0);
-      port = _server!.port;
-      await _log('Server bound to port $port');
+      // Start HTTP server with SO_REUSEADDR to allow fast rebind
+      await _log('Binding server to anyIPv4:0 with SO_REUSEADDR...');
+      try {
+        final serverSocket = await ServerSocket.bind(InternetAddress.anyIPv4, 0, backlog: 5, shared: true);
+        _server = HttpServer.listenOn(serverSocket);
+        port = _server!.port;
+        await _log('Server bound to port $port with socket reuse enabled');
+      } catch (e) {
+        // Fallback: use standard bind
+        debugPrint('[ShareEngine] SO_REUSEADDR bind failed, using standard bind: $e');
+        _server = await HttpServer.bind(InternetAddress.anyIPv4, 0);
+        port = _server!.port;
+        await _log('Server bound to port $port (standard bind)');
+      }
       
       // Find local IP address
       localIP = await _getLocalIP();

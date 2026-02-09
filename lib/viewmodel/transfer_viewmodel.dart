@@ -42,10 +42,22 @@ class TransferViewModel extends StateNotifier<TransferState> {
 
   Future<void> joinAndDownload(String baseUrl, String saveDir) async {
     try {
-      state = state.copyWith(status: TransferStatus.joining, progress: 0.0, message: 'Connecting');
+      state = state.copyWith(status: TransferStatus.joining, progress: 0.0, message: 'Connexion...');
       final uri = Uri.parse(baseUrl);
+      if (uri.host.isEmpty || uri.port == 0) {
+        state = state.copyWith(status: TransferStatus.error, message: 'URL invalide');
+        return;
+      }
       final client = HttpClient();
-      final resp = await client.getUrl(uri.replace(path: '/session')).then((r) => r.close());
+      client.connectionTimeout = const Duration(seconds: 10);
+      HttpClientResponse resp;
+      try {
+        final req = await client.getUrl(uri.replace(path: '/session')).timeout(const Duration(seconds: 10));
+        resp = await req.close().timeout(const Duration(seconds: 10));
+      } catch (e) {
+        state = state.copyWith(status: TransferStatus.error, message: 'Connexion refusée: $e');
+        return;
+      }
       if (resp.statusCode != 200) {
         state = state.copyWith(status: TransferStatus.error, message: 'Session error ${resp.statusCode}');
         return;

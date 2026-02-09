@@ -11,6 +11,15 @@ import 'package:flutter/scheduler.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
+  // Request ALL FILES ACCESS permission FIRST
+  try {
+    debugPrint('[main] Requesting All Files Access permission...');
+    final status = await PermissionService.requestAllFilesAccess();
+    debugPrint('[main] All Files Access permission: $status');
+  } catch (e) {
+    debugPrint('[main] ✗ Permission request failed: $e');
+  }
+  
   try {
     // Initialize storage structure (SHAREL root folder, subfolders, etc)
     debugPrint('[main] Initializing storage structure...');
@@ -18,16 +27,6 @@ Future<void> main() async {
     debugPrint('[main] ✓ Storage initialized');
   } catch (e) {
     debugPrint('[main] ✗ Storage initialization failed: $e');
-  }
-
-  try {
-    // Request ALL FILES ACCESS permission at app launch
-    // This is CRITICAL for SHAREL to function properly
-    debugPrint('[main] Requesting All Files Access permission...');
-    final status = await PermissionService.requestAllFilesAccess();
-    debugPrint('[main] All Files Access permission: $status');
-  } catch (e) {
-    debugPrint('[main] ✗ Permission request failed: $e');
   }
 
   // Determine if we must show welcome on first run

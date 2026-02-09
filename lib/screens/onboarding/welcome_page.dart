@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../services/storage_service.dart';
+import '../../services/permission_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../l10n/app_localizations.dart';
 import '../../core/theme/design_system.dart';
@@ -35,19 +36,43 @@ class _WelcomePageState extends State<WelcomePage> {
         curve: Curves.easeInOut,
       );
     } else {
-      // Mark onboarding completed then navigate
-      try {
-        StorageService().setCompletedOnboarding();
-      } catch (_) {}
-      context.go('/');
+      _completeOnboarding();
     }
   }
 
   void _skipOnboarding() {
+    _completeOnboarding();
+  }
+
+  Future<void> _completeOnboarding() async {
+    // Request permissions one more time
     try {
-      StorageService().setCompletedOnboarding();
-    } catch (_) {}
-    context.go('/');
+      await PermissionService.requestAllFilesAccess();
+      debugPrint('[WelcomePage] Permissions requested in onboarding');
+    } catch (e) {
+      debugPrint('[WelcomePage] Permission request error: $e');
+    }
+
+    // Ensure SHAREL folder is created
+    try {
+      await StorageService().initialize();
+      debugPrint('[WelcomePage] Storage initialized');
+    } catch (e) {
+      debugPrint('[WelcomePage] Storage initialization error: $e');
+    }
+
+    // Mark onboarding completed
+    try {
+      await StorageService().setCompletedOnboarding();
+      debugPrint('[WelcomePage] Onboarding marked as completed');
+    } catch (e) {
+      debugPrint('[WelcomePage] Onboarding flag error: $e');
+    }
+
+    // Navigate to home
+    if (mounted) {
+      context.go('/');
+    }
   }
 
   @override
