@@ -9,12 +9,18 @@ import io.flutter.embedding.android.FlutterActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.io.ByteArrayOutputStream
+import com.sharel.com.MdnsManager
 
 class MainActivity : FlutterActivity() {
     private val CHANNEL = "com.sharel.app/apps"
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
+        
+        // Initialize mDNS service
+        val mdnsManager = MdnsManager(this)
+        mdnsManager.setupChannel(flutterEngine)
+        
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, CHANNEL).setMethodCallHandler { call, result ->
             if (call.method == "getInstalledApps") {
                 try {

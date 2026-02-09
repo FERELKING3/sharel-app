@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:multicast_dns/multicast_dns.dart';
+import 'native_mdns_service.dart';
 
 // Multicast settings for UDP fallback advertisement
 const _kMulticastAddress = '224.0.0.251';
@@ -55,12 +56,16 @@ class MDnsService {
               ResourceRecordQuery.text(ptr.domainName),
             )) {
               // txt.text is List<String>, each element is a key=value pair
-              for (final entry in txt.text) {
-                final parts = entry.split('=');
-                if (parts.length >= 2) {
-                  txtMap[parts[0]] = parts.sublist(1).join('=');
+              try {
+                final txtEntries = txt.text as List;
+                for (final entry in txtEntries) {
+                  final entryStr = entry.toString();
+                  final parts = entryStr.split('=');
+                  if (parts.length >= 2) {
+                    txtMap[parts[0]] = parts.sublist(1).join('=');
+                  }
                 }
-              }
+              } catch (_) {}
             }
 
             // Resolve A/AAAA
@@ -145,10 +150,28 @@ class MDnsService {
     return '127.0.0.1';
   }
 
-  /// Publish a lightweight UDP multicast advertisement as a fallback for environments
-  /// where native mDNS registration is not available. Sends a small JSON payload
-  /// regularly on the multicast group.
+  /// Publish a service using native mDNS first (Android/iOS), fallback to UDP
+  /// - Tries NativeMdnsService first for robust Bonjour/mDNS registration
+  /// - Falls back to lightweight UDP multicast for unsupported platforms
   Future<void> publishService({required String name, required int port, Map<String, String>? txt}) async {
+    try {
+      // Try native mDNS registration first (Android NsdManager, iOS NetService)
+      final nativeSuccess = await NativeMdnsService.publishService(
+        serviceName: name,
+        serviceType: '_sharel._tcp',
+        port: port,
+        txtRecords: txt,
+      );
+
+      if (nativeSuccess) {
+        debugPrint('[MDnsService] Using native mDNS publication');
+        return;
+      }
+    } catch (e) {
+      debugPrint('[MDnsService] Native mDNS failed: $e, falling back to UDP');
+    }
+
+    // Fallback: UDP multicast
     try {
       _advertTimer?.cancel();
       final sock = await RawDatagramSocket.bind(InternetAddress.anyIPv4, 0);
@@ -171,12 +194,17 @@ class MDnsService {
 
       sendOnce();
       _advertTimer = Timer.periodic(const Duration(seconds: 2), (_) => sendOnce());
+      debugPrint('[MDnsService] Using UDP multicast fallback');
     } catch (e) {
-      // ignore
+      debugPrint('[MDnsService] UDP fallback also failed: $e');
     }
   }
 
   Future<void> stopPublishing() async {
+    try {
+      await NativeMdnsService.unpublishService();
+    } catch (_) {}
+
     try {
       _advertTimer?.cancel();
       _advertTimer = null;

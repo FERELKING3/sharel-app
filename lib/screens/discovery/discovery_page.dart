@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-
-import 'package:flutter/material.dart';
 import 'package:sharel_app/l10n/app_localizations.dart';
 import '../../core/theme/design_system.dart';
 import '../../services/mdns_service.dart';

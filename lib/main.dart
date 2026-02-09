@@ -50,7 +50,7 @@ class SharelApp extends StatelessWidget {
     if (showWelcome) {
       // navigate to welcome after first frame so router is ready
       SchedulerBinding.instance.addPostFrameCallback((_) {
-        if (appRouter.location != '/welcome') appRouter.go('/welcome');
+        appRouter.go('/welcome');
       });
     }
     return MaterialApp.router(

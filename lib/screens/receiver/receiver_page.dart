@@ -10,7 +10,8 @@ class ReceiverPage extends StatefulWidget {
 }
 
 class _ReceiverPageState extends State<ReceiverPage> {
-  bool _isLoading = false;
+  // ignore: unused_field
+  final bool _isLoading = false;
 
   @override
   Widget build(BuildContext context) {
