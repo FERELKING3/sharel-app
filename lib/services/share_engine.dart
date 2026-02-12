@@ -12,17 +12,19 @@ import 'package:sharel_app/services/mdns_service.dart';
 class ShareEngine {
   HttpServer? _server;
   final List<SelectedItem> items;
+  final void Function(int)? onClientsChanged;
   late final String sessionId;
   late final String sessionToken;
   late final DateTime tokenExpiry;
   int port = 0;
   String localIP = '127.0.0.1';
   Map<int, String>? _hashCache; // {index: sha256}
+  final Set<String> _clients = {};
   
   static const protocolVersion = '1.0';
   static const tokenExpirationMinutes = 30;
 
-  ShareEngine(this.items) {
+  ShareEngine(this.items, {this.onClientsChanged}) {
     sessionId = DateTime.now().millisecondsSinceEpoch.toString();
     sessionToken = Uuid().v4();
     tokenExpiry = DateTime.now().add(Duration(minutes: tokenExpirationMinutes));
@@ -187,6 +189,7 @@ class ShareEngine {
 
   void _handleRequest(HttpRequest req) async {
     try {
+      final remoteIp = req.connectionInfo?.remoteAddress.address ?? 'unknown';
       final path = req.uri.path;
       final token = req.uri.queryParameters['token'];
       final method = req.method.toUpperCase();
@@ -311,6 +314,12 @@ class ShareEngine {
         }));
         await req.response.close();
         LoggerService.log('POST /handshake - Session validated', component: 'ShareEngine');
+        // Register the remote client IP and notify listener
+        try {
+          _clients.add(remoteIp);
+          onClientsChanged?.call(_clients.length);
+          LoggerService.log('Client connected: $remoteIp (total: ${_clients.length})', component: 'ShareEngine');
+        } catch (_) {}
         return;
       }
 
@@ -350,6 +359,11 @@ class ShareEngine {
 
             // Stream the file
             LoggerService.log('GET /file/$idx - Streaming file: ${file.path} (${file.lengthSync()} bytes)', component: 'ShareEngine');
+            // treat a file request as a client activity and register the IP
+            try {
+              _clients.add(remoteIp);
+              onClientsChanged?.call(_clients.length);
+            } catch (_) {}
             await file.openRead().pipe(req.response);
             return;
           }

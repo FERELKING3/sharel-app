@@ -51,6 +51,8 @@ class TransferViewModel extends StateNotifier<TransferState> {
       final client = HttpClient();
       client.connectionTimeout = const Duration(seconds: 10);
       HttpClientResponse resp;
+
+      // Step 1: Get session metadata
       try {
         final req = await client.getUrl(uri.replace(path: '/session')).timeout(const Duration(seconds: 10));
         resp = await req.close().timeout(const Duration(seconds: 10));
@@ -65,6 +67,23 @@ class TransferViewModel extends StateNotifier<TransferState> {
       final body = await resp.transform(utf8.decoder).join();
       final json = body.isNotEmpty ? jsonDecode(body) as Map : {};
       final items = (json['items'] as List<dynamic>).cast<Map<String, dynamic>>();
+
+      // Step 2: Handshake to register as connected client
+      state = state.copyWith(message: 'Enregistrement...');
+      try {
+        final handshakeReq = await client.postUrl(uri.replace(path: '/handshake')).timeout(const Duration(seconds: 10));
+        final handshakeResp = await handshakeReq.close().timeout(const Duration(seconds: 10));
+        if (handshakeResp.statusCode != 200) {
+          state = state.copyWith(status: TransferStatus.error, message: 'Handshake failed ${handshakeResp.statusCode}');
+          return;
+        }
+        await handshakeResp.drain();
+      } catch (e) {
+        state = state.copyWith(status: TransferStatus.error, message: 'Handshake error: $e');
+        return;
+      }
+
+      // Step 3: Download files
       final total = items.length;
       int received = 0;
       for (var it in items) {
