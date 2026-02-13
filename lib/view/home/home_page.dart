@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../providers/role_provider.dart';
 import '../../core/theme/design_system.dart';
+import '../../core/providers/auth_provider.dart';
 
 class HomePage extends ConsumerWidget {
   const HomePage({super.key});
@@ -61,6 +62,9 @@ class HomePage extends ConsumerWidget {
   }
 
   Widget _buildAppBar(BuildContext context, WidgetRef ref) {
+    final isLoggedIn = ref.watch(isLoggedInProvider);
+    final userName = ref.watch(userNameProvider);
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -82,25 +86,82 @@ class HomePage extends ConsumerWidget {
                   ),
             ),
           ),
-          // Notification bell avec badge
-          Stack(
+          // Right side: Auth button + Notifications
+          Row(
             children: [
-              IconButton(
-                icon: const Icon(Icons.notifications_rounded,
-                    color: AppColors.primary, size: 28),
-                onPressed: () => context.push('/notification'),
-              ),
-              Positioned(
-                right: 8,
-                top: 8,
-                child: Container(
-                  width: 10,
-                  height: 10,
-                  decoration: const BoxDecoration(
-                    color: Colors.red,
-                    shape: BoxShape.circle,
+              // Auth Button
+              if (isLoggedIn)
+                Tooltip(
+                  message: userName ?? 'Utilisateur',
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundColor: AppColors.primary.withValues(alpha: 0.2),
+                    child: Icon(
+                      Icons.person_rounded,
+                      color: AppColors.primary,
+                    ),
+                  ),
+                )
+              else
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => context.push('/auth'),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.primary.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.person_add_rounded,
+                            color: AppColors.primary,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            'Compte',
+                            style: TextStyle(
+                              color: AppColors.primary,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
+              const SizedBox(width: 12),
+              // Notification bell avec badge
+              Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_rounded,
+                        color: AppColors.primary, size: 28),
+                    onPressed: () => context.push('/notification'),
+                  ),
+                  Positioned(
+                    right: 8,
+                    top: 8,
+                    child: Container(
+                      width: 10,
+                      height: 10,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

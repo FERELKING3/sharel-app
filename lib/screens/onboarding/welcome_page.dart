@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:liquid_swipe/liquid_swipe.dart';
 import '../../services/storage_service.dart';
 import '../../services/permission_service.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -14,26 +15,25 @@ class WelcomePage extends StatefulWidget {
 }
 
 class _WelcomePageState extends State<WelcomePage> {
-  late PageController _pageController;
+  late LiquidController _liquidController;
   int _currentPage = 0;
 
   @override
   void initState() {
     super.initState();
-    _pageController = PageController();
+    _liquidController = LiquidController();
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
     super.dispose();
   }
 
   void _nextPage() {
     if (_currentPage < 3) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 400),
-        curve: Curves.easeInOut,
+      _liquidController.animateToPage(
+        page: _currentPage + 1,
+        duration: 600,
       );
     } else {
       _completeOnboarding();
@@ -78,46 +78,54 @@ class _WelcomePageState extends State<WelcomePage> {
   @override
   Widget build(BuildContext context) {
     final t = AppLocalizations.of(context);
-    final screenHeight = MediaQuery.of(context).size.height;
+
+    final pages = [
+      _buildWelcomeSlide(
+        title: t?.labelSend ?? 'Envoyer',
+        description:
+            'Partagez vos fichiers instantanément avec d\'autres appareils via WiFi',
+        icon: Icons.send_rounded,
+        color: AppColors.sendColor,
+      ),
+      _buildWelcomeSlide(
+        title: t?.labelReceive ?? 'Recevoir',
+        description:
+            'Recevez des fichiers en toute sécurité de vos amis et collègues',
+        icon: Icons.cloud_download_rounded,
+        color: AppColors.receiveColor,
+      ),
+      _buildWelcomeSlide(
+        title: t?.labelFiles ?? 'Fichiers',
+        description: 'Gérez et organisez tous vos fichiers partagés',
+        icon: Icons.folder_open_rounded,
+        color: AppColors.filesColor,
+      ),
+      _buildWelcomeSlide(
+        title: 'Prêt à commencer?',
+        description:
+            'SHAREL rend le partage de fichiers facile, rapide et sécurisé',
+        icon: Icons.check_circle_rounded,
+        color: AppColors.primary,
+      ),
+    ];
 
     return Scaffold(
-      backgroundColor: Colors.white,
       body: Stack(
         children: [
-          PageView(
-            controller: _pageController,
-            onPageChanged: (page) {
+          LiquidSwipe(
+            pages: pages,
+            liquidController: _liquidController,
+            fullTransitionValue: 400,
+            enableSideReveal: true,
+            waveType: WaveType.liquidReveal,
+            onPageChangeCallback: (page) {
               setState(() => _currentPage = page);
             },
-            children: [
-              _buildWelcomeSlide(
-                title: t?.labelSend ?? 'Envoyer',
-                description: 'Partagez vos fichiers instantanément avec d\'autres appareils via WiFi',
-                icon: Icons.send_rounded,
-                color: AppColors.sendColor,
-              ),
-              _buildWelcomeSlide(
-                title: t?.labelReceive ?? 'Recevoir',
-                description: 'Recevez des fichiers en toute sécurité de vos amis et collègues',
-                icon: Icons.cloud_download_rounded,
-                color: AppColors.receiveColor,
-              ),
-              _buildWelcomeSlide(
-                title: t?.labelFiles ?? 'Fichiers',
-                description: 'Gérez et organisez tous vos fichiers partagés',
-                icon: Icons.folder_open_rounded,
-                color: AppColors.filesColor,
-              ),
-              _buildWelcomeSlide(
-                title: 'Prêt à commencer?',
-                description: 'SHAREL rend le partage de fichiers facile, rapide et sécurisé',
-                icon: Icons.check_circle_rounded,
-                color: AppColors.primary,
-              ),
-            ],
+            enableLoop: false,
+            ignoreUserGestureWhileAnimating: true,
           ),
           Positioned(
-            bottom: screenHeight * 0.05,
+            bottom: 60,
             left: 0,
             right: 0,
             child: Column(
@@ -127,19 +135,19 @@ class _WelcomePageState extends State<WelcomePage> {
                   children: List.generate(
                     4,
                     (index) => Container(
-                      margin: const EdgeInsets.symmetric(horizontal: 4),
-                      width: _currentPage == index ? 24 : 8,
-                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 6),
+                      width: _currentPage == index ? 28 : 10,
+                      height: 10,
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(4),
+                        borderRadius: BorderRadius.circular(5),
                         color: _currentPage == index
                             ? AppColors.primary
                             : AppColors.primary.withValues(alpha: 0.3),
                       ),
-                    ),
+                    ).animate().scale(duration: const Duration(milliseconds: 300)),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: 40),
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Row(
@@ -149,28 +157,46 @@ class _WelcomePageState extends State<WelcomePage> {
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 24,
-                            vertical: 12,
+                            vertical: 14,
                           ),
-                          backgroundColor: AppColors.primary.withValues(alpha: 0.1),
+                          backgroundColor:
+                              AppColors.primary.withValues(alpha: 0.08),
                           foregroundColor: AppColors.primary,
                           elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
-                        child: const Text('Passer'),
+                        child: const Text(
+                          'Passer',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
+                        ),
                       ),
                       const Spacer(),
                       ElevatedButton(
                         onPressed: _nextPage,
                         style: ElevatedButton.styleFrom(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 32,
-                            vertical: 12,
+                            horizontal: 36,
+                            vertical: 14,
                           ),
                           backgroundColor: AppColors.primary,
-                          elevation: 0,
+                          elevation: 4,
+                          shadowColor: AppColors.primary.withValues(alpha: 0.4),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
                         ),
                         child: Text(
                           _currentPage == 3 ? 'Démarrer' : 'Suivant',
-                          style: const TextStyle(color: Colors.white),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ],
@@ -190,54 +216,90 @@ class _WelcomePageState extends State<WelcomePage> {
     required IconData icon,
     required Color color,
   }) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 120,
-            height: 120,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: color.withValues(alpha: 0.1),
-            ),
-            child: Icon(
-              icon,
-              size: 64,
-              color: color,
-            ),
-          )
-              .animate()
-              .scale(duration: const Duration(milliseconds: 600))
-              .shimmer(duration: const Duration(milliseconds: 1500)),
-          const SizedBox(height: 32),
-          Text(
-            title,
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.bold,
-              color: AppColors.textDark,
-            ),
-            textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: const Duration(milliseconds: 400))
-              .slideY(begin: 0.2),
-          const SizedBox(height: 16),
-          Text(
-            description,
-            style: const TextStyle(
-              fontSize: 16,
-              color: AppColors.textGrey,
-              height: 1.5,
-            ),
-            textAlign: TextAlign.center,
-          )
-              .animate()
-              .fadeIn(duration: const Duration(milliseconds: 600))
-              .slideY(begin: 0.2),
-        ],
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withValues(alpha: 0.05),
+            color.withValues(alpha: 0.02),
+          ],
+        ),
+      ),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 48),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const SizedBox(height: 40),
+            Container(
+              width: 140,
+              height: 140,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: color.withValues(alpha: 0.12),
+                boxShadow: [
+                  BoxShadow(
+                    color: color.withValues(alpha: 0.2),
+                    blurRadius: 30,
+                    spreadRadius: 5,
+                  ),
+                ],
+              ),
+              child: Icon(
+                icon,
+                size: 72,
+                color: color,
+              ),
+            )
+                .animate()
+                .scale(duration: const Duration(milliseconds: 700))
+                .shimmer(duration: const Duration(milliseconds: 2000)),
+            const SizedBox(height: 48),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
+                color: AppColors.textDark,
+                letterSpacing: -0.5,
+              ),
+              textAlign: TextAlign.center,
+            )
+                .animate()
+                .fadeIn(duration: const Duration(milliseconds: 500))
+                .slideY(begin: 0.3, duration: const Duration(milliseconds: 500)),
+            const SizedBox(height: 20),
+            Container(
+              width: 60,
+              height: 4,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(2),
+                color: color,
+              ),
+            )
+                .animate()
+                .scaleX(duration: const Duration(milliseconds: 800))
+                .then()
+                .shimmer(duration: const Duration(milliseconds: 1500)),
+            const SizedBox(height: 24),
+            Text(
+              description,
+              style: TextStyle(
+                fontSize: 17,
+                color: AppColors.textGrey,
+                height: 1.6,
+                fontWeight: FontWeight.w400,
+              ),
+              textAlign: TextAlign.center,
+            )
+                .animate()
+                .fadeIn(duration: const Duration(milliseconds: 700))
+                .slideY(begin: 0.2, duration: const Duration(milliseconds: 700)),
+            const SizedBox(height: 60),
+          ],
+        ),
       ),
     );
   }

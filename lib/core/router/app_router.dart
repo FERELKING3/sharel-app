@@ -14,6 +14,11 @@ import '../../screens/notification/notification_center_page.dart';
 import '../../screens/me/me_page.dart';
 import '../../screens/discovery/discovery_page.dart';
 import '../../screens/onboarding/welcome_page.dart';
+import '../../screens/auth/auth_screen.dart';
+import '../../screens/auth/login_screen.dart';
+import '../../screens/auth/signup_screen.dart';
+import '../../screens/analyzer/analyzer_screen.dart';
+import '../../screens/settings/settings_screen.dart';
 import '../../widgets/app_shell.dart';
 import '../../providers/role_provider.dart';
 
@@ -30,6 +35,31 @@ final appRouter = GoRouter(
     GoRoute(
       path: '/welcome',
       builder: (context, state) => const WelcomePage(),
+    ),
+    GoRoute(
+      path: '/auth',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AuthScreen(),
+    ),
+    GoRoute(
+      path: '/auth/login',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const LoginScreen(),
+    ),
+    GoRoute(
+      path: '/auth/signup',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const SignupScreen(),
+    ),
+    GoRoute(
+      path: '/analyzer',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const AnalyzerScreen(),
+    ),
+    GoRoute(
+      path: '/settings',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const SettingsScreen(),
     ),
     ShellRoute(
       navigatorKey: _shellNavigatorKey,

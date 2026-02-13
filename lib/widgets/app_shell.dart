@@ -2,18 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter/services.dart';
 import 'package:sharel_app/l10n/app_localizations.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/responsive/responsive_config.dart';
+import '../core/responsive/responsive_extensions.dart';
+import '../core/providers/settings_provider.dart';
+import 'responsive_dock.dart';
 
-class AppShell extends StatefulWidget {
+class AppShell extends ConsumerStatefulWidget {
   final Widget child;
   const AppShell({required this.child, super.key});
 
   @override
-  State<AppShell> createState() => _AppShellState();
+  ConsumerState<AppShell> createState() => _AppShellState();
 }
 
-class _AppShellState extends State<AppShell> {
+class _AppShellState extends ConsumerState<AppShell> {
   int _selectedIndex = 0;
   DateTime? _lastBackPressed;
+  bool _isDockCollapsed = false;
 
   void _onNavDestinationSelected(int index) {
     setState(() => _selectedIndex = index);
@@ -37,21 +43,43 @@ class _AppShellState extends State<AppShell> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final t = AppLocalizations.of(context);
+    final dockPosition = ref.watch(dockPositionProvider);
+    final deviceType = context.deviceType;
+    final isVerticalDock =
+        dockPosition == DockPosition.left || dockPosition == DockPosition.right;
+
+    final dockItems = [
+      DockItem(
+        label: t?.bottomNavHome ?? 'Accueil',
+        icon: Icons.home_outlined,
+      ),
+      DockItem(
+        label: t?.labelFiles ?? 'Fichiers',
+        icon: Icons.folder_outlined,
+      ),
+      DockItem(
+        label: t?.bottomNavDiscovery ?? 'Découvrir',
+        icon: Icons.travel_explore,
+      ),
+      DockItem(
+        label: t?.bottomNavMe ?? 'Profil',
+        icon: Icons.person_outline,
+      ),
+    ];
+
     return PopScope(
       canPop: true,
       onPopInvokedWithResult: (didPop, _) async {
-        // If a nested route handled the pop, nothing to do.
         if (didPop) return;
 
-        // If navigator can pop a route, pop it.
         if (context.canPop()) {
           context.pop();
           return;
         }
 
-        // Otherwise we're at the root of the shell: require double-press to exit.
         final now = DateTime.now();
-        if (_lastBackPressed == null || now.difference(_lastBackPressed!) > const Duration(seconds: 2)) {
+        if (_lastBackPressed == null ||
+            now.difference(_lastBackPressed!) > const Duration(seconds: 2)) {
           _lastBackPressed = now;
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Appuyez de nouveau pour quitter')),
@@ -59,46 +87,133 @@ class _AppShellState extends State<AppShell> {
           return;
         }
 
-        // Second press within window -> exit app
-        // Use SystemNavigator.pop to behave like typical apps.
         SystemNavigator.pop();
       },
-      child: Scaffold(
+      child: _buildResponsiveLayout(
+        context,
+        theme,
+        deviceType,
+        isVerticalDock,
+        dockPosition,
+        dockItems,
+      ),
+    );
+  }
+
+  Widget _buildResponsiveLayout(
+    BuildContext context,
+    ThemeData theme,
+    DeviceType deviceType,
+    bool isVerticalDock,
+    DockPosition dockPosition,
+    List<DockItem> dockItems,
+  ) {
+    // Mobile: Bottom dock always
+    if (deviceType == DeviceType.mobile) {
+      return Scaffold(
         body: widget.child,
         bottomNavigationBar: Container(
           decoration: BoxDecoration(
-            border: Border(top: BorderSide(color: theme.colorScheme.outline.withValues(alpha: 0.1))),
+            border: Border(
+              top: BorderSide(
+                color: theme.colorScheme.outline.withValues(alpha: 0.1),
+              ),
+            ),
           ),
-          child: NavigationBar(
-            backgroundColor: theme.colorScheme.surface,
-            elevation: 0,
+          child: ResponsiveDock(
             selectedIndex: _selectedIndex,
-            destinations: [
-              NavigationDestination(
-                icon: const Icon(Icons.home_outlined),
-                selectedIcon: const Icon(Icons.home),
-                label: t?.bottomNavHome ?? 'Accueil',
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.folder_outlined),
-                selectedIcon: const Icon(Icons.folder),
-                label: t?.labelFiles ?? 'Fichiers',
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.travel_explore),
-                selectedIcon: const Icon(Icons.travel_explore),
-                label: t?.bottomNavDiscovery ?? 'Découvrir',
-              ),
-              NavigationDestination(
-                icon: const Icon(Icons.person_outline),
-                selectedIcon: const Icon(Icons.person),
-                label: t?.bottomNavMe ?? 'Profil',
-              ),
-            ],
-            onDestinationSelected: _onNavDestinationSelected,
+            onIndexChanged: _onNavDestinationSelected,
+            items: dockItems,
+            position: DockPosition.bottom,
+            isCollapsed: false,
           ),
         ),
-      ),
+      );
+    }
+
+    // Tablet/Desktop with vertical dock
+    if (isVerticalDock) {
+      final dockWidth = _isDockCollapsed ? 60.0 : 80.0;
+
+      return Row(
+        children: [
+          if (dockPosition == DockPosition.left)
+            Container(
+              width: dockWidth,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                border: Border(
+                  right: BorderSide(
+                    color:
+                        theme.colorScheme.outline.withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
+              child: ResponsiveDock(
+                selectedIndex: _selectedIndex,
+                onIndexChanged: _onNavDestinationSelected,
+                items: dockItems,
+                position: DockPosition.left,
+                isCollapsed: _isDockCollapsed,
+                onCollapseToggle: () {
+                  setState(() => _isDockCollapsed = !_isDockCollapsed);
+                },
+              ),
+            ),
+          Expanded(
+            child: Scaffold(
+              body: widget.child,
+            ),
+          ),
+          if (dockPosition == DockPosition.right)
+            Container(
+              width: dockWidth,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surface,
+                border: Border(
+                  left: BorderSide(
+                    color:
+                        theme.colorScheme.outline.withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
+              child: ResponsiveDock(
+                selectedIndex: _selectedIndex,
+                onIndexChanged: _onNavDestinationSelected,
+                items: dockItems,
+                position: DockPosition.right,
+                isCollapsed: _isDockCollapsed,
+                onCollapseToggle: () {
+                  setState(() => _isDockCollapsed = !_isDockCollapsed);
+                },
+              ),
+            ),
+        ],
+      );
+    }
+
+    // Tablet/Desktop with horizontal dock (top/bottom)
+    return Scaffold(
+      body: widget.child,
+      bottomNavigationBar: dockPosition == DockPosition.bottom
+          ? Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color:
+                        theme.colorScheme.outline.withValues(alpha: 0.1),
+                  ),
+                ),
+              ),
+              child: ResponsiveDock(
+                selectedIndex: _selectedIndex,
+                onIndexChanged: _onNavDestinationSelected,
+                items: dockItems,
+                position: DockPosition.bottom,
+                isCollapsed: false,
+              ),
+            )
+          : null,
     );
   }
 }
